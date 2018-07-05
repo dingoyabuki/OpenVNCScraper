@@ -34,7 +34,7 @@ process_amount = 50
 screenshot_path = os.getcwd().replace('\\', '/') + "/results/screenshots/"
 
 password_file = "./passwords.txt"
-ipfile = "./pw_results.txt"
+ipfile = "./results.txt"
 valid_ipfile = "./results/" + time.strftime("%Y%m%d-%H%M%S") + "_validips.txt"
 password_ipfile = "./results/" + time.strftime("%Y%m%d-%H%M%S") + "_passwordips.txt"
 
