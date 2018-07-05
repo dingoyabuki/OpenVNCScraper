@@ -147,7 +147,7 @@ def screencapture(startendpts):
     
         
 def appendlinetofile(line, file):
-    with open(file, "a") as myfile:
+    with open(file, "a+") as myfile:
         myfile.write(line + "\n") 
         
         
